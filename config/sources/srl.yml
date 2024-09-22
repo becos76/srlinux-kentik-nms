@@ -1,0 +1,15 @@
+version: 1
+metadata:
+  name: nokia-srl-grpc
+  kind: sources
+sources:
+  nokia-srl-grpc: !gnmi
+    path: /system/lldp
+    mode: SAMPLE
+    extra:
+      sample_interval: 60s
+  nokia-srl-grpc-info: !gnmi
+    path: /system/information
+    mode: SAMPLE
+    extra:
+      sample_interval: 300s

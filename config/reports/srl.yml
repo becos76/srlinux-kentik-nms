@@ -1,0 +1,62 @@
+version: 1
+metadata:
+  name: nokia-srl-grpc
+  kind: reports
+reports:
+  /lldp/global:
+    script: !external
+      type: starlark
+      file: nokia-srl-grpc-lldp-global.star
+    interval: 300s
+  /lldp/interfaces:
+    script: !external
+      type: starlark
+      file: nokia-srl-grpc-lldp-intf.star
+    interval: 60s
+  /lldp/interfaces/neighbors:
+    script: !external
+      type: starlark
+      file: nokia-srl-grpc-lldp-nei.star
+    interval: 60s
+
+  # Trying to get version from gnmi and append it via process() is not working
+  # /system:
+  #   script: !external
+  #     type: starlark
+  #     file: nokia-srl-grpc-system.star
+  #   #   load('system.star', 'system_process')
+  #   #   load("ranger", "source")
+  #   #   load("ranger", "device")
+  #   #   load("ranger", "metric")
+      
+  #   #   def get_version():
+  #   #     version = source.select("/system/information/version")
+  #   #     return version
+
+  #   #   def process(n, indexes):
+  #   #     n.append('sys-object-id', "1.3.6.1.4.1.6527.1.20.22", metric=False)
+  #   #     system_process(n, indexes)
+  #   #     n.append("index", 0, metric=False)
+        
+  #   #     #version = "22222"
+  #   #     version = get_version()
+  #   #     n.append('os-version', version, metric=False)  
+  #   interval: 30s
+# So using snmp sources
+  /system:
+    script: !starlark |
+      load('system.star', 'system_process')
+      load("re.star", "re")
+      regex = re.compile(r'(?P<os_name>SRLinux).(?P<os_version>\S+).(?P<product>.+).+Copyright')
+
+      def process(n, indexes):
+        system_process(n, indexes)
+        m = regex.match(n['description'].value)
+        if m:
+          n.append('os-name', m[0][1], metric=False)
+          n.append('os-version', m[0][2], metric=False)
+          n.append('product-name', m[0][3], metric=False)
+    include:
+      - oc-system
+    interval: 300s
+
